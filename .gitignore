@@ -1,0 +1,30 @@
+# Created by https://www.gitignore.io/api/scala,playframework
+conf/local.conf
+
+### PlayFramework ###
+# Ignore Play! working directory #
+bin/
+/db
+.eclipse
+/lib/
+/logs/
+/modules
+/project/project
+/project/target
+/target
+tmp/
+test-result
+server.pid
+*.eml
+/dist/
+.cache
+
+### Scala ###
+*.class
+*.log
+
+
+### Intellij ###
+.idea/
+
+# End of https://www.gitignore.io/api/scala,playframework
