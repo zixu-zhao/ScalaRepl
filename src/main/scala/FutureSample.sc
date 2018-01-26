@@ -18,10 +18,10 @@ val confirmation: Future[Array[Byte]] = packet.flatMap(p => Future(p))
   * Never use it in the asynchronous scenario
   */
 
-trait Awaitable[T] extends AnyRef {
-  abstract def ready(atMost: Duration): Unit
+abstract class Awaitable[T] extends AnyRef {
+   def ready(atMost: Duration): Unit
 
-  abstract def result(atMost: Duration): T
+   def result(atMost: Duration): T
 }
 
 /**
@@ -67,17 +67,6 @@ trait FutureCustomized[T] extends Awaitable[T] {
     }
   }
 
-  /** The FoldLeft version of retry, but in this case the recursive version
-    * is better -> Occam's razor
-    */
-
-  def retryWithFoldeft(noTimes: Int)(block: => FutureCustomized[T]): FutureCustomized[T] = {
-    val ns = (1 to noTimes).toList
-    val attempts = ns.map(_ => ( ) => block)
-    val failed = this.failed(new Exception) // actually is Future.failed(new Exception)
-    val result = attempts.foldLeft(failed)( (a, block) => a recoverWith { block() } )
-    result
-  }
 }
 
 
