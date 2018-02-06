@@ -98,6 +98,9 @@ class DefaultTaskScheduler extends TaskScheduler {
     * t.invoke() will be t.invoke() working on the current Thread between
     * invoking fork and join.
     *
+    * Reference:
+    * 1) https://stackoverflow.com/questions/17876144/fork-join-related-join-vs-get-vs-invoke
+    *
     * @param taskA
     * @param taskB
     * @tparam A
