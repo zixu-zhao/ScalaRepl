@@ -80,19 +80,19 @@ class DefaultTaskScheduler extends TaskScheduler {
       *
       * Here, the t is an ForkJoinTasks
       *
-      * -------------------------------------
-      *             ForkJoinPool
-      *
-      *   Dequeue      Dequeue      Dequeue
-      * -----------  -----------  -----------
-      * | task F  |  |         |  |         |
-      * -----------  -----------  -----------
-      * | task D  |  | task E  |  |         |
-      * -----------  -----------  -----------
-      * | task A  |  | task B  |  | task C  |
-      * -----------  -----------  -----------
-      *  Thread 1      Thread 2    Thread 3
-      * -------------------------------------
+      * ------------------------------------------------------
+      *             ForkJoinPool               | Unused Thread
+      *                                        |
+      *   Dequeue      Dequeue      Dequeue    |
+      * -----------  -----------  -----------  |
+      * | task F  |  |         |  |         |  |
+      * -----------  -----------  -----------  |
+      * | task D  |  | task E  |  |         |  |
+      * -----------  -----------  -----------  |
+      * | task A  |  | task B  |  | task C  |  |
+      * -----------  -----------  -----------  |
+      *  Thread 1      Thread 2    Thread 3    |  Thread 4
+      * -------------------------------------  |--------------
       * 
       * ^ Dequeus won't communicate each other, and each task is an ForkJoinTasks
       *
