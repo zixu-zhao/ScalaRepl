@@ -37,9 +37,10 @@ class DefaultTaskScheduler extends TaskScheduler {
 
   def schedule[T](body: => T): ForkJoinTask[T] = {
     /**
-      * A RecursiveTask is a task that returns a result.
-      * It may split its work up into smaller tasks, and
-      * merge the result of these smaller tasks into a
+      * A RecursiveTask is a ForkJoinTask that returns a result.
+      * 
+      * It may split its work up into smaller tasks(ForkJoinTask), 
+      * and merge the result of these smaller tasks into a
       * collective result. So we were able to split task
       * t by more smaller sub-tasks.
       */
@@ -54,8 +55,9 @@ class DefaultTaskScheduler extends TaskScheduler {
       * On Sun JVMs, with a IO-heavy workload, we can run
       * tens of thousands of threads on a single machine.
       *
-      * The current threads could be a 1) ForkJoinWorkerThread
-      * and 2) task thread.
+      * The current thread could be a 
+      * 1) ForkJoinPool used thread -> ForkJoinWorkerThread
+      * 2) other non-related thread
       *
       * From Java document, ForkJoinWorkerThread is "A thread
       * managed by a ForkJoinPool, which executes ForkJoinTasks."
@@ -77,6 +79,22 @@ class DefaultTaskScheduler extends TaskScheduler {
       * forkJoinPool.execute(t) to (async) execute the task t.
       *
       * Here, the t is an ForkJoinTasks
+      *
+      * -------------------------------------
+      *             ForkJoinPool
+      *
+      *   Dequeue      Dequeue      Dequeue
+      * -----------  -----------  -----------
+      * | task F  |  |         |  |         |
+      * -----------  -----------  -----------
+      * | task D  |  | task E  |  |         |
+      * -----------  -----------  -----------
+      * | task A  |  | task B  |  | task C  |
+      * -----------  -----------  -----------
+      *  Thread 1      Thread 2    Thread 3
+      * -------------------------------------
+      * 
+      * ^ Dequeus won't communicate each other, and each task is an ForkJoinTasks
       *
       * References:
       * 1) https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinTask.html
