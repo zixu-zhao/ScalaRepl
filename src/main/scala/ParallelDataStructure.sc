@@ -16,8 +16,16 @@ val forkJoinPool = new ForkJoinPool
   * schedule will take an task (function) and return an ForkJoinTask
   * of type T, which comes from java.util.concurrent.ForkJoinTask
   *
-  *
   * A ForkJoinTask is a lightweight form of Future.
+  * 
+  * Future is a placeholder object for data that will exist in future,
+  * and that data is supplied concurrently and can subsequently be used.
+  *
+  * So Future is like a single-use Observable object in Reactive Programming,
+  * and it has operation isDone(), or wait for it to finish using get(), 
+  * where the get() here is similar as the join() of ForkJoinTask objects.  
+  *
+  * Will explain more of ForkJoinTask with ForkJoinPool below.
   */
 
 abstract class TaskScheduler {
