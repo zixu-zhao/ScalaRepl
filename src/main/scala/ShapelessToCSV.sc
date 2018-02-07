@@ -87,7 +87,7 @@ object toCSV extends Poly1 {
 val content = SeqOfHList.map(s => s.values.map(toCSV).toList)
 
 
-val keys = SeqOfHList.map(k => k.keys.toList.map(_.name)).head
+val keys = SeqOfHList.map(k => k.keys.toList.map(_.toString.stripPrefix("'"))).head
 
 val temporaryCSVFile = SingletonTemporaryFileCreator.create()
 
