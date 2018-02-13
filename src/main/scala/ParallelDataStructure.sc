@@ -94,7 +94,7 @@ class DefaultTaskScheduler extends TaskScheduler {
       *  Thread 1      Thread 2    Thread 3    |   Thread 4
       * ------------------------------------------------------
       * 
-      * ^ Dequeus won't communicate each other, and each task is an ForkJoinTasks
+      * Dequeus won't communicate each other, and each task is an ForkJoinTasks
       *
       * References:
       * 1) https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinTask.html
