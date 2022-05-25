@@ -29,7 +29,10 @@ libraryDependencies ++= Seq(
   "com.github.tototoshi" %% "scala-csv" % "1.3.5",
 
   // ScalaMeter for performance check
-  "com.storm-enroute" %% "scalameter" % "0.8.2"
+  "com.storm-enroute" %% "scalameter" % "0.8.2",
+
+  // Akka
+  "com.typesafe.akka" %% "akka-actor" % "2.4.20"
 )
 
 testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")
