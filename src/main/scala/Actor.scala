@@ -1,4 +1,4 @@
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 
 import scala.language.postfixOps
 
@@ -6,8 +6,8 @@ import scala.language.postfixOps
  * Copyright nDimensional, Inc. 2015. All rights reserved.
  */
 object Actor extends App {
-  val actorSystem = ActorSystem("firstActorSystem")
-  println(actorSystem.name)
+  val system = ActorSystem("firstsystem")
+  println(system.name)
 
   // part2 create actors
   // * Actors are uniquely identified
@@ -31,14 +31,14 @@ object Actor extends App {
 
   // part3 instantiate actor
 
-  val wordCounter1 = actorSystem.actorOf(Props[WordCountActor], "wordCounter1")
+  val wordCounter1 = system.actorOf(Props[WordCountActor], "wordCounter1")
 
   // part4 communicate with actor
 
   wordCounter1 ! "sending message 1"
   // asynchronous
 
-  val wordCounter2 = actorSystem.actorOf(Props[WordCountActor], "wordCounter2")
+  val wordCounter2 = system.actorOf(Props[WordCountActor], "wordCounter2")
   wordCounter2 ! "sending message 2"
 
   wordCounter1 tell("1 to 2", wordCounter2)
@@ -54,14 +54,14 @@ object Actor extends App {
     def props(name: String) = Props(new Person(name))
   }
 
-  val personActor = actorSystem.actorOf(Person.props("zixu"), "PersonActor1")
+  val personActor = system.actorOf(Person.props("zixu"), "PersonActor1")
 
   personActor ! "hi"
 
 
   case class SpecialContent(content: String)
 
-  val Carol = actorSystem.actorOf(Props[SimpleActor], "carolActor")
+  val Carol = system.actorOf(Props[SimpleActor], "carolActor")
 
   class SimpleActor extends Actor {
     override def receive: Receive = {
@@ -77,7 +77,7 @@ object Actor extends App {
     }
   }
 
-  val simpleActor1 = actorSystem.actorOf(Props[SimpleActor], "SimpleActor1")
+  val simpleActor1 = system.actorOf(Props[SimpleActor], "SimpleActor1")
 
   simpleActor1 ! "hello actor!"
 
@@ -98,8 +98,8 @@ object Actor extends App {
 
   case class ForwardMessage(content: String)
 
-  val alice = actorSystem.actorOf(Props[SimpleActor], "aliceActor")
-  val bob = actorSystem.actorOf(Props[SimpleActor], "bobActor")
+  val alice = system.actorOf(Props[SimpleActor], "aliceActor")
+  val bob = system.actorOf(Props[SimpleActor], "bobActor")
 
   bob tell(ForwardMessage("Hello!"), alice) // alice send bob a message
 
@@ -127,13 +127,219 @@ object Actor extends App {
     }
   }
 
-  val counterActor = actorSystem.actorOf(Props[CounterActor], "CountActor")
+  val counterActor = system.actorOf(Props[CounterActor], "CountActor")
 
-  for (_ <- 1 to 100) {
+  for (_ <- 1 to 10) {
     new Thread(() => counterActor ! IncrementMessage(1)).start()
   }
 
-  for (_ <- 1 to 100) {
+  for (_ <- 1 to 10) {
     new Thread(() => counterActor ! DecrementMessage(1)).start()
   }
+
+  object FussyKid {
+    case class KidAccept()
+    case class KidReject()
+
+    val HAPPY = "happy"
+    val SAD = "sad"
+  }
+  
+  class FussyKid extends Actor {
+    import FussyKid._
+    import Mom._
+
+    var state = HAPPY
+    override def receive: Receive = {
+      case Food(VEGETABLE) => state = SAD
+      case Food(CHOCOLATE) => state = HAPPY
+      case Ask(message) => sender() ! (if (state == HAPPY) KidAccept else KidReject)
+    }
+  }
+
+  class StatelessFussyKid extends Actor {
+    import FussyKid._
+    import Mom._
+
+    override def receive: Receive = happyReceive
+
+    def happyReceive: Receive = {
+      case Food(VEGETABLE) => context.become(sadReceive)
+      case Food(CHOCOLATE) =>
+      case Ask(_) => sender() ! KidAccept
+    }
+    def sadReceive: Receive = {
+      case Food(VEGETABLE) =>
+      case Food(CHOCOLATE) => context.unbecome()
+      case Ask(_) => sender() ! KidReject
+    }
+
+  }
+
+  object Mom {
+    case class Start(kid: ActorRef)
+    case class Food(food: String)
+    case class Ask(message: String)
+
+    val VEGETABLE = "vegetable"
+    val CHOCOLATE = "chocolate"
+  }
+  class Mom extends Actor {
+    import Mom._
+    import FussyKid._
+
+    override def receive: Receive = {
+      case Start(kid) =>
+        kid ! Food(VEGETABLE)
+        kid ! Food(VEGETABLE)
+        kid ! Ask("Do you want to play")
+        kid ! Food(CHOCOLATE)
+        kid ! Ask("Do you want to play")
+
+      case KidAccept => println("Kid is happy")
+      case KidReject => println("Kid is sad")
+    }
+  }
+
+  val fussykid1 = system.actorOf(Props[FussyKid])
+  val fussykid2 = system.actorOf(Props[StatelessFussyKid])
+  val mom = system.actorOf(Props[Mom])
+
+  mom ! Mom.Start(fussykid1)
+
+  mom ! Mom.Start(fussykid2)
+
+  object Counter {
+    case object Increment
+    case object Decrement
+    case object Print
+  }
+  class Counter extends Actor {
+    import Counter._
+
+    override def receive: Receive = count(0)
+
+    def count(current: Int): Receive = {
+      case Increment =>
+        println(s"[counter] Increment - current: $current")
+        context.become(count(current + 1))
+      case Decrement =>
+        println(s"[counter] Decrement - current: $current")
+        context.become(count(current - 1))
+      case Print =>
+        println(s"[counter] Print - current: $current")
+    }
+  }
+
+  val counter = system.actorOf(Props[Counter])
+
+  (1 to 5) foreach(_ => counter ! Counter.Increment)
+  (1 to 5) foreach(_ => counter ! Counter.Decrement)
+  counter ! Counter.Print
+
+  class Child extends Actor {
+    override def receive: Receive = {
+      case message => println(s"${self.path} I got: $message")
+    }
+  }
+  object Parent {
+    case class CreateChild(name: String)
+    case class TellChild(message: String)
+
+  }
+  class Parent extends Actor {
+    import Parent._
+
+    override def receive: Receive = {
+      case CreateChild(name) =>
+        println(s"${self.path} will create a child")
+        val childActorRef = system.actorOf(Props[Child], name)
+        context.become(withChild(childActorRef))
+    }
+
+    def withChild(ref: ActorRef): Receive = {
+      case TellChild(message) => ref forward message
+    }
+  }
+
+  val parentActor = system.actorOf(Props[Parent], "aParent")
+  parentActor ! Parent.CreateChild("aChild")
+  parentActor ! Parent.TellChild("hey!")
+
+  /**
+   * Akka system has three Guardian actors
+   *  - / = the root Guardian
+   *  - /system = system Guardian
+   *  - /user = user Guardian
+   *
+   *  system and user sit under the root Guardian
+   *  system Guardian manages user Guardian
+   *  user Guardian manages all single actors users created
+   */
+
+
+  /**
+   * Actor selection
+   */
+
+  val childSelection = system.actorSelection("/user/aChild")
+  childSelection ! "I found you!"
+
+  /**
+   * NEVER PASS MUTABLE ACTOR STATE, or THE `THIS` REFERENCE, TO CHILD ACTORS
+   */
+
+  object NaiveBankAccount {
+    case class Deposit(amount: Int)
+    case class Withdraw(amount: Int)
+
+    case object InitializeAccount
+  }
+  class NaiveBankAccount extends Actor {
+    import NaiveBankAccount._
+    import CreditCard._
+
+    var amount = 0
+    override def receive: Receive = {
+      case InitializeAccount =>
+        val creditCardRef = context.actorOf(Props[CreditCard], "aCreditCard")
+        creditCardRef ! AttachToAccount(self)
+      case Deposit(v) => deposit(v)
+      case Withdraw(v) => withdraw(v)
+
+    }
+
+    def deposit(v: Int) = amount +=  v
+    def withdraw(v: Int) = amount -= v
+  }
+
+
+  object CreditCard {
+    case class AttachToAccount(bankAccount: ActorRef)
+
+    case object CheckStatus
+  }
+  class CreditCard extends Actor {
+    import CreditCard._
+
+    override def receive: Receive = {
+      case AttachToAccount(account) =>
+        println(s"[credit card] ${self.path} Attach credit card to account ${account.path}")
+        context.become(attachTo(account))
+    }
+
+    def attachTo(_account: ActorRef): Receive = {
+      case CheckStatus =>
+        println(s"${self.path} your message has been processed")
+    }
+  }
+
+  val bankAccountRef = system.actorOf(Props[NaiveBankAccount], "aNativeBankAccount")
+  bankAccountRef ! NaiveBankAccount.InitializeAccount
+  bankAccountRef ! NaiveBankAccount.Deposit(100)
+
+  Thread.sleep(500)
+  val creditCardRef = system.actorSelection("/user/aNativeBankAccount/aCreditCard")
+  creditCardRef ! CreditCard.CheckStatus
+
 }
