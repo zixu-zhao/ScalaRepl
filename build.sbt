@@ -32,7 +32,10 @@ libraryDependencies ++= Seq(
   "com.storm-enroute" %% "scalameter" % "0.8.2",
 
   // Akka
-  "com.typesafe.akka" %% "akka-actor" % "2.4.20"
+  "com.typesafe.akka" %% "akka-actor" % "2.4.20",
+
+  // ScalaZ
+  "org.scalaz" %% "scalaz-core" % "7.3.6"
 )
 
 testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")

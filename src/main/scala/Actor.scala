@@ -342,4 +342,29 @@ object Actor extends App {
   val creditCardRef = system.actorSelection("/user/aNativeBankAccount/aCreditCard")
   creditCardRef ! CreditCard.CheckStatus
 
+
+//  class WordCounterMaster extends Actor {
+//    import WordCounterMaster._
+//    override def receive: Receive = {
+//      case Initialize(nChildren) =>
+//        val childRefs = for (i <- 1 to nChildren) yield context.actorOf(Props[WordCounterWorker], s"wordcounterworker-$i")
+//        context.become()
+//    }
+//
+//    def withChildren(refs: Seq[ActorRef])
+//  }
+//
+//  object WordCounterMaster {
+//    case class Initialize(nChildren: Int)
+//    case class WordCountTask(text: String)
+//    case class WordCountReply(count: Int)
+//  }
+//
+//  class WordCounterWorker extends Actor {
+//    import WordCounterMaster._
+//    override def receive: Receive =  {
+//      case WordCountTask(text) => sender() ! WordCountReply(text.split(" ").length)
+//    }
+//  }
+
 }
